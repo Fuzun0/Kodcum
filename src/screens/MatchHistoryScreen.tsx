@@ -332,6 +332,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   statValue: {
     fontSize: 24,
@@ -339,9 +340,11 @@ const createStyles = (colors: any) => StyleSheet.create({
     color: colors.text,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
     marginTop: 4,
+    textAlign: 'center',
+    flexWrap: 'wrap',
   },
   winRateCard: {
     marginHorizontal: 16,
