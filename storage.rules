@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+    
+    // Profil fotoğrafları
+    match /profile_photos/{userId}/{allPaths=**} {
+      allow read, write: if true;
+    }
+    
+    // Genel yüklemeler
+    match /uploads/{userId}/{allPaths=**} {
+      allow read, write: if true;
+    }
+    
+    // Düello görselleri
+    match /duel_images/{allPaths=**} {
+      allow read, write: if true;
+    }
+    
+    // Sohbet ekleri
+    match /chat_attachments/{conversationId}/{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

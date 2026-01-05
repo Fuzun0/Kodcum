@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    // ====== KULLANICILAR ======
+    match /kullanicilar/{userId} {
+      allow read, write: if true;
+    }
+    
+    match /users/{docId} {
+      allow read, write: if true;
+    }
+    
+    // ====== ARKADAŞLIK SİSTEMİ ======
+    match /arkadasliklar/{docId} {
+      allow read, write: if true;
+    }
+    
+    match /arkadaslikIstekleri/{requestId} {
+      allow read, write: if true;
+    }
+    
+    match /friendRequests/{requestId} {
+      allow read, write: if true;
+    }
+    
+    match /friendships/{docId} {
+      allow read, write: if true;
+    }
+    
+    // ====== MESAJLAŞMA ======
+    match /konusmalar/{conversationId} {
+      allow read, write: if true;
+      
+      match /mesajlar/{messageId} {
+        allow read, write: if true;
+      }
+    }
+    
+    match /conversations/{conversationId} {
+      allow read, write: if true;
+      
+      match /messages/{messageId} {
+        allow read, write: if true;
+      }
+    }
+    
+    // ====== DÜELLO SİSTEMİ ======
+    match /duelloIstekleri/{requestId} {
+      allow read, write: if true;
+    }
+    
+    match /duelRequests/{requestId} {
+      allow read, write: if true;
+    }
+    
+    match /aktivDuellolar/{duelId} {
+      allow read, write: if true;
+    }
+    
+    match /activeDuels/{duelId} {
+      allow read, write: if true;
+    }
+    
+    // ====== DÜELLO SONUÇLARI ======
+    match /duelloSonuclari/{resultId} {
+      allow read, write: if true;
+    }
+    
+    match /duelResults/{resultId} {
+      allow read, write: if true;
+    }
+    
+    // ====== GÜNLÜK GÖREVLER ======
+    match /gunlukGorevler/{docId} {
+      allow read, write: if true;
+    }
+    
+    match /dailyChallenges/{docId} {
+      allow read, write: if true;
+    }
+    
+    // ====== İLERLEME & BAŞARILAR ======
+    match /ilerleme/{progressId} {
+      allow read, write: if true;
+    }
+    
+    match /progress/{progressId} {
+      allow read, write: if true;
+    }
+    
+    match /rozetler/{badgeId} {
+      allow read, write: if true;
+    }
+    
+    match /badges/{badgeId} {
+      allow read, write: if true;
+    }
+    
+    // ====== LİDERLİK & BİLDİRİMLER ======
+    match /liderlikTablosu/{userId} {
+      allow read, write: if true;
+    }
+    
+    match /leaderboard/{userId} {
+      allow read, write: if true;
+    }
+    
+    match /bildirimler/{notificationId} {
+      allow read, write: if true;
+    }
+    
+    match /notifications/{notificationId} {
+      allow read, write: if true;
+    }
+  }
+}
