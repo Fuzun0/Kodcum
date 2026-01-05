@@ -558,12 +558,15 @@ export class DuelService {
   }
 
   /**
-   * Düelloyu tamamla
+   * Düelloyu tamamla (Eski sistem için - yeni aktif düellolar bu fonksiyonu kullanmaz)
    */
-  static async completeDuel(userId: string, duelId: string): Promise<DuelResult> {
+  static async completeDuel(userId: string, duelId: string): Promise<DuelResult | null> {
     try {
       const duel = await this.getDuel(userId, duelId);
-      if (!duel) throw new Error('Düello bulunamadı');
+      if (!duel) {
+        console.log('⚠️ Düello bulunamadı (muhtemelen aktif düello sistemi kullanılıyor):', duelId);
+        return null;
+      }
 
       // Kazananı belirle
       let winnerId: string | null = null;

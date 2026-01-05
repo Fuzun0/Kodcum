@@ -853,9 +853,6 @@ const DuelScreen = () => {
         .then(() => console.log('✅ Oyuncu düelloyu bitirdi, skor:', finalScore))
         .catch(err => console.error('Skor kaydetme hatası:', err));
     }
-    
-    // Eski sisteme de kaydet (opsiyonel, arka planda)
-    DuelService.completeDuel(user.id, duel.id).catch(() => {});
   };
 
   const renderCategorySelection = () => (

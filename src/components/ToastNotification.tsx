@@ -101,8 +101,10 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: 0,
-    left: width * 0.05,
-    right: width * 0.05,
+    left: 0,
+    right: 0,
+    marginHorizontal: width * 0.05,
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,

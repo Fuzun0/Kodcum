@@ -43,19 +43,10 @@ export class FriendService {
    */
   static async getFriends(userId: string): Promise<Friend[]> {
     try {
-      const friendsMap = new Map<string, Friend>();
-      
-      // Önce AsyncStorage'dan oku (hızlı gösterim için)
-      const localFriends = await AsyncStorage.getItem(`${FRIENDS_KEY}_${userId}`);
-      const localParsed: Friend[] = localFriends ? JSON.parse(localFriends) : [];
-      
-      for (const friend of localParsed) {
-        friendsMap.set(friend.odakId, friend);
-      }
-      
-      // Sonra Firestore'dan arkadaşlıkları çek ve profilleri güncelle
+      // Firestore'dan arkadaşlıkları çek (Firestore'u kaynak olarak kullan)
       if (db) {
         try {
+          const friendsMap = new Map<string, Friend>();
           const arkadasliklarRef = collection(db, KOLEKSIYONLAR.ARKADASLIKLAR);
           
           // user1 olarak kayıtlı arkadaşlıklar
@@ -67,9 +58,8 @@ export class FriendService {
             // Her zaman profili güncelle (photoURL değişmiş olabilir)
             const friendProfile = await this.getFriendProfile(data.user2Id);
             if (friendProfile) {
-              const existingFriend = friendsMap.get(data.user2Id);
               const friend: Friend = {
-                id: existingFriend?.id || `friend_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                id: `friend_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
                 odakId: data.user2Id,
                 odakName: data.user2Name || friendProfile.displayName,
                 displayName: friendProfile.displayName,
@@ -78,7 +68,7 @@ export class FriendService {
                 xp: friendProfile.xp,
                 streak: friendProfile.streak,
                 lastActiveDate: friendProfile.lastActiveDate,
-                friendshipDate: existingFriend?.friendshipDate || data.createdAt
+                friendshipDate: data.createdAt
               };
               friendsMap.set(data.user2Id, friend);
             }
@@ -93,9 +83,8 @@ export class FriendService {
             // Her zaman profili güncelle (photoURL değişmiş olabilir)
             const friendProfile = await this.getFriendProfile(data.user1Id);
             if (friendProfile) {
-              const existingFriend = friendsMap.get(data.user1Id);
               const friend: Friend = {
-                id: existingFriend?.id || `friend_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                id: `friend_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
                 odakId: data.user1Id,
                 odakName: data.user1Name || friendProfile.displayName,
                 displayName: friendProfile.displayName,
@@ -104,22 +93,26 @@ export class FriendService {
                 xp: friendProfile.xp,
                 streak: friendProfile.streak,
                 lastActiveDate: friendProfile.lastActiveDate,
-                friendshipDate: existingFriend?.friendshipDate || data.createdAt
+                friendshipDate: data.createdAt
               };
               friendsMap.set(data.user1Id, friend);
             }
           }
           
-          // Firestore'dan gelen arkadaşları da AsyncStorage'a kaydet
+          // Firestore'dan gelen arkadaşları AsyncStorage'a kaydet
           const allFriends = Array.from(friendsMap.values());
           await AsyncStorage.setItem(`${FRIENDS_KEY}_${userId}`, JSON.stringify(allFriends));
           
+          return allFriends;
         } catch (firestoreError) {
           console.log('Firestore arkadaş listesi okuma hatası:', firestoreError);
+          // Firestore hatası varsa AsyncStorage'dan dön
         }
       }
       
-      return Array.from(friendsMap.values());
+      // Firestore yoksa veya hata varsa AsyncStorage'dan oku
+      const localFriends = await AsyncStorage.getItem(`${FRIENDS_KEY}_${userId}`);
+      return localFriends ? JSON.parse(localFriends) : [];
     } catch (error) {
       console.error('Arkadaş listesi getirme hatası:', error);
       return [];
@@ -147,13 +140,54 @@ export class FriendService {
   }
 
   /**
-   * Arkadaşlıktan çıkar
+   * Arkadaşlıktan çıkar (Firestore + AsyncStorage)
    */
   static async removeFriend(userId: string, friendId: string): Promise<void> {
     try {
+      console.log('🗑️ Arkadaşlık siliniyor:', { userId, friendId });
+      
+      // Firestore'dan arkadaşlığı sil
+      if (db) {
+        const arkadasliklarRef = collection(db, KOLEKSIYONLAR.ARKADASLIKLAR);
+        
+        // user1Id-user2Id kombinasyonunu ara
+        const q1 = query(
+          arkadasliklarRef,
+          where('user1Id', '==', userId),
+          where('user2Id', '==', friendId)
+        );
+        const snapshot1 = await getDocs(q1);
+        
+        for (const docSnap of snapshot1.docs) {
+          await deleteDoc(doc(db, KOLEKSIYONLAR.ARKADASLIKLAR, docSnap.id));
+          console.log('✅ Firestore arkadaşlık belgesi silindi (user1-user2):', docSnap.id);
+        }
+        
+        // user2Id-user1Id kombinasyonunu ara
+        const q2 = query(
+          arkadasliklarRef,
+          where('user1Id', '==', friendId),
+          where('user2Id', '==', userId)
+        );
+        const snapshot2 = await getDocs(q2);
+        
+        for (const docSnap of snapshot2.docs) {
+          await deleteDoc(doc(db, KOLEKSIYONLAR.ARKADASLIKLAR, docSnap.id));
+          console.log('✅ Firestore arkadaşlık belgesi silindi (user2-user1):', docSnap.id);
+        }
+      }
+      
+      // AsyncStorage'dan da sil (her iki kullanıcı için)
       const friends = await this.getFriends(userId);
       const filtered = friends.filter(f => f.odakId !== friendId);
       await AsyncStorage.setItem(`${FRIENDS_KEY}_${userId}`, JSON.stringify(filtered));
+      
+      // Diğer kullanıcının listesinden de sil
+      const friendFriends = await this.getFriends(friendId);
+      const friendFiltered = friendFriends.filter(f => f.odakId !== userId);
+      await AsyncStorage.setItem(`${FRIENDS_KEY}_${friendId}`, JSON.stringify(friendFiltered));
+      
+      console.log('✅ Arkadaşlık başarıyla silindi');
     } catch (error) {
       console.error('Arkadaş silme hatası:', error);
       throw error;

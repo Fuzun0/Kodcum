@@ -119,6 +119,41 @@ const FriendsScreen = () => {
       }
     }
 
+    // Arkadaşlıklar dinleyicisi - Arkadaşlık silindiğinde veya eklendiğinde otomatik güncelle
+    try {
+      const arkadasliklarRef = collection(db, KOLEKSIYONLAR.ARKADASLIKLAR);
+      
+      // user1Id olarak kayıtlı arkadaşlıkları dinle
+      const friendsQuery1 = query(
+        arkadasliklarRef,
+        where('user1Id', '==', user.id)
+      );
+      
+      const unsubFriends1 = onSnapshot(friendsQuery1, (snapshot) => {
+        console.log('👥 Arkadaşlık değişikliği algılandı (user1):', snapshot.size);
+        loadData(); // Listeyi yenile
+      }, (error) => {
+        console.log('ℹ️ Arkadaşlıklar dinleyici hatası:', error.message);
+      });
+      
+      // user2Id olarak kayıtlı arkadaşlıkları dinle
+      const friendsQuery2 = query(
+        arkadasliklarRef,
+        where('user2Id', '==', user.id)
+      );
+      
+      const unsubFriends2 = onSnapshot(friendsQuery2, (snapshot) => {
+        console.log('👥 Arkadaşlık değişikliği algılandı (user2):', snapshot.size);
+        loadData(); // Listeyi yenile
+      }, (error) => {
+        console.log('ℹ️ Arkadaşlıklar dinleyici hatası:', error.message);
+      });
+      
+      unsubscribers.push(unsubFriends1, unsubFriends2);
+    } catch (err) {
+      console.log('ℹ️ Arkadaşlıklar dinleyici kurulamadı');
+    }
+
     // Cleanup function
     return () => {
       console.log('🔕 Real-time listener kapatılıyor...');
@@ -189,6 +224,12 @@ const FriendsScreen = () => {
     if (!user) return;
     
     try {
+      // Önce kullanıcıyı arama sonuçlarından kaldır ve bildirimi göster
+      setSearchResults(searchResults.filter(r => r.userId !== targetUser.userId));
+      Alert.alert('Başarılı', 'Arkadaşlık isteği gönderiliyor...');
+      lightHaptic();
+      
+      // Sonra arka planda isteği gönder
       await FriendService.sendFriendRequest(
         user.id,
         user.displayName,
@@ -196,10 +237,14 @@ const FriendsScreen = () => {
         user.level,
         targetUser.userId
       );
-      Alert.alert('Başarılı', 'Arkadaşlık isteği gönderildi!');
-      setSearchResults(searchResults.filter(r => r.userId !== targetUser.userId));
+      
+      successHaptic();
+      console.log('✅ Arkadaşlık isteği gönderildi:', targetUser.displayName);
     } catch (error: any) {
+      // Hata olursa kullanıcıyı geri ekle
+      setSearchResults(prev => [...prev, targetUser]);
       Alert.alert('Hata', error.message || 'İstek gönderilemedi');
+      errorHaptic();
     }
   };
 

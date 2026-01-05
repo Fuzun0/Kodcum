@@ -16,8 +16,7 @@ import { KOLEKSIYONLAR } from '../config/firebaseCollections';
 import { useAuth } from './AuthContext';
 import { useTheme } from './ThemeContext';
 import { DuelService } from '../services/DuelService';
-// FriendService disabled to avoid circular dependency
-// import { FriendService } from '../services/FriendService';
+import { FriendService } from '../services/FriendService';
 
 const { width } = Dimensions.get('window');
 
@@ -415,22 +414,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               color: '#10b981',
               data: { requestId, ...data },
               onAccept: async () => {
-                // FriendService disabled to avoid circular dependency
-                console.log('Arkadaşlık kabul:', requestId);
-                // try {
-                //   await FriendService.acceptFriendRequest(user.id, requestId);
-                // } catch (error) {
-                //   console.error('Arkadaşlık kabul hatası:', error);
-                // }
+                try {
+                  await FriendService.acceptFriendRequest(user.id, requestId);
+                  console.log('✅ Arkadaşlık kabul edildi:', requestId);
+                } catch (error) {
+                  console.error('Arkadaşlık kabul hatası:', error);
+                }
               },
               onReject: async () => {
-                // FriendService disabled to avoid circular dependency
-                console.log('Arkadaşlık reddet:', requestId);
-                // try {
-                //   await FriendService.rejectFriendRequest(user.id, requestId);
-                // } catch (error) {
-                //   console.error('Arkadaşlık reddetme hatası:', error);
-                // }
+                try {
+                  await FriendService.rejectFriendRequest(user.id, requestId);
+                  console.log('❌ Arkadaşlık reddedildi:', requestId);
+                } catch (error) {
+                  console.error('Arkadaşlık reddetme hatası:', error);
+                }
               }
             });
           }
@@ -458,8 +455,10 @@ const styles = StyleSheet.create({
   bannerContainer: {
     position: 'absolute',
     top: 50,
-    right: 12,
-    width: width * 0.85,
+    left: 0,
+    right: 0,
+    marginHorizontal: width * 0.075,
+    alignSelf: 'center',
     maxWidth: 340,
     borderRadius: 16,
     borderLeftWidth: 4,
